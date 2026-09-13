@@ -39,7 +39,10 @@ def fetch_contacts():
         root = ET.fromstring(r.text)
     except ET.ParseError as exc:
         raise ValueError("CardDAV PROPFIND returned invalid XML") from exc
-    for response in root.findall(".//{DAV:}response"):
+    if root.tag != "{DAV:}multistatus":
+        raise ValueError("CardDAV PROPFIND returned unexpected XML payload")
+
+    for response in root.findall("{DAV:}response"):
         href = response.find("{DAV:}href")
         if href is None or not href.text:
             continue
