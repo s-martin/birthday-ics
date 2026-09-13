@@ -65,6 +65,25 @@ def parse_bday(value):
     return None
 
 
+def format_bday_summary(name, value):
+    year = None
+    if isinstance(value, datetime):
+        year = value.year
+    elif isinstance(value, date_type):
+        year = value.year
+    elif isinstance(value, str):
+        text = value.strip()
+        if not text.startswith("--"):
+            for fmt in ("%Y-%m-%d", "%Y%m%d"):
+                try:
+                    year = datetime.strptime(text, fmt).year
+                    break
+                except ValueError:
+                    continue
+
+    return f"{name} ({year})" if year is not None else name
+
+
 def fetch_contacts():
     validate_config()
     headers = {"Depth": "1"}
@@ -187,7 +206,7 @@ def generate_ics():
 
                 ics += (
                     "BEGIN:VEVENT\n"
-                    f"SUMMARY:{name} Geburtstag\n"
+                    f"SUMMARY:{format_bday_summary(name, v.bday.value)}\n"
                     f"DTSTART;VALUE=DATE:{date.strftime('%Y%m%d')}\n"
                     "RRULE:FREQ=YEARLY\n"
                     "END:VEVENT\n"
