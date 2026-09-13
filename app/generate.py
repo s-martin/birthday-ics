@@ -76,12 +76,11 @@ def fetch_contacts():
             status_parts = status.split()
             if len(status_parts) < 2 or status_parts[1] != "200":
                 continue
-            collection_path = "/".join([
-                qname("prop"),
-                qname("resourcetype"),
-                qname("collection"),
-            ])
-            if propstat.find(collection_path) is not None:
+            prop = propstat.find(qname("prop"))
+            if prop is None:
+                continue
+            resourcetype = prop.find(qname("resourcetype"))
+            if resourcetype is not None and resourcetype.find(qname("collection")) is not None:
                 is_collection = True
                 break
 
