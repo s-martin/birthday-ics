@@ -20,7 +20,7 @@ Create a folder and download the `docker-compose.yml`:
 ```bash
 mkdir birthday-ics && cd birthday-ics
 
-curl -O https://raw.githubusercontent.com/<YOUR_GITHUB_USERNAME>/birthday-ics/main/docker-compose.yml.TEMPLATE && mv docker-compose.yml.TEMPLATE docker-compose.yml
+curl -O https://raw.githubusercontent.com/s-martin/birthday-ics/main/docker-compose.yml.TEMPLATE && mv docker-compose.yml.TEMPLATE docker-compose.yml
 ```
 
 Edit the configuration variables.
