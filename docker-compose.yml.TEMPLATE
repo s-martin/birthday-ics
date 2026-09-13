@@ -2,7 +2,7 @@ version: "3.9"
 
 services:
   birthday-ics:
-    image: ghcr.io/<YOUR_GITHUB_USERNAME>/birthday-ics:latest
+    image: ghcr.io/s-martin/birthday-ics:latest
     container_name: birthday-ics
     ports:
       - "8080:8080"
