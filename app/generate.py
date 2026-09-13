@@ -35,7 +35,10 @@ def fetch_contacts():
 
     contacts = []
     base_url = CARDDAV_URL.rstrip("/")
-    root = ET.fromstring(r.text)
+    try:
+        root = ET.fromstring(r.text)
+    except ET.ParseError as exc:
+        raise ValueError("CardDAV PROPFIND returned invalid XML") from exc
     for response in root.findall(".//{DAV:}response"):
         href = response.find("{DAV:}href")
         if href is None or not href.text:
