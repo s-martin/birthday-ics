@@ -66,10 +66,9 @@ def normalize_bday(value):
             except ValueError:
                 continue
     if isinstance(value, datetime):
-        parsed_date = value.date()
-        return raw_value, parsed_date, parsed_date.year
+        return raw_value, value.date(), None
     if isinstance(value, date_type):
-        return raw_value, value, value.year
+        return raw_value, value, None
 
     return raw_value, None, None
 
