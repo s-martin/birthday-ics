@@ -1,6 +1,7 @@
 import requests
 import vobject
 import os
+from urllib.parse import urljoin
 
 CARDDAV_URL = os.getenv("CARDDAV_URL")
 USERNAME = os.getenv("CARDDAV_USER")
@@ -22,19 +23,34 @@ def should_ignore(name: str) -> bool:
 
 def fetch_contacts():
     headers = {"Depth": "1"}
-    r = requests.request("PROPFIND", CARDDAV_URL, auth=(USERNAME, PASSWORD), headers=headers)
+    r = requests.request(
+        "PROPFIND",
+        CARDDAV_URL,
+        auth=(USERNAME, PASSWORD),
+        headers=headers,
+        timeout=30,
+    )
+    r.raise_for_status()
     return r.text.split("<d:href>")[1:]
 
 
 def generate_ics():
+    missing = [k for k, v in {
+        "CARDDAV_URL": CARDDAV_URL,
+        "CARDDAV_USER": USERNAME,
+        "CARDDAV_PASS": PASSWORD,
+    }.items() if not v]
+    if missing:
+        raise ValueError(f"Missing required environment variables: {', '.join(missing)}")
+
     ics = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Birthday Export//EN\n"
 
     for href in fetch_contacts():
-        url = href.split("</d:href>")[0]
-        card = requests.get(url, auth=(USERNAME, PASSWORD)).text
-
         try:
-            v = vobject.readOne(card)
+            url = urljoin(CARDDAV_URL, href.split("</d:href>")[0])
+            card = requests.get(url, auth=(USERNAME, PASSWORD), timeout=30)
+            card.raise_for_status()
+            v = vobject.readOne(card.text)
             if hasattr(v, "bday"):
                 name = v.fn.value
 
