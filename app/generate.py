@@ -83,7 +83,7 @@ def parse_bday(value):
 
 def format_bday_summary(name, value):
     _, _, year = normalize_bday(value)
-    return f"{name} ({year})" if year is not None else name
+    return f"{name} {{{year}}}" if year is not None else name
 
 
 def fetch_contacts():
