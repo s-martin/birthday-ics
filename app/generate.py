@@ -50,7 +50,8 @@ def fetch_contacts():
         root = ET.fromstring(r.text)
     except ET.ParseError as exc:
         raise ValueError("CardDAV PROPFIND returned invalid XML") from exc
-    if root.tag != "{DAV:}multistatus":
+    root_local_name = root.tag.split("}", 1)[-1]
+    if root_local_name != "multistatus":
         raise ValueError("CardDAV PROPFIND returned unexpected XML payload")
 
     for response in root.findall("{DAV:}response"):
