@@ -58,7 +58,7 @@ def fetch_contacts():
                 break
 
         if not is_collection:
-            contacts.append(href.text)
+            contacts.append(resolved_href)
 
     return contacts
 
@@ -76,8 +76,7 @@ def generate_ics():
 
     for href in fetch_contacts():
         try:
-            url = urljoin(CARDDAV_URL, href)
-            card = requests.get(url, auth=(USERNAME, PASSWORD), timeout=30)
+            card = requests.get(href, auth=(USERNAME, PASSWORD), timeout=30)
             card.raise_for_status()
             v = vobject.readOne(card.text)
             if hasattr(v, "bday"):
