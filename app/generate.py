@@ -17,12 +17,23 @@ IGNORE_LIST = [
 OUTPUT_FILE = "/data/birthdays.ics"
 
 
+def validate_config():
+    missing = [k for k, v in {
+        "CARDDAV_URL": CARDDAV_URL,
+        "CARDDAV_USER": USERNAME,
+        "CARDDAV_PASS": PASSWORD,
+    }.items() if not v]
+    if missing:
+        raise ValueError(f"Missing required environment variables: {', '.join(missing)}")
+
+
 def should_ignore(name: str) -> bool:
     lname = name.lower()
     return any(ignore in lname for ignore in IGNORE_LIST)
 
 
 def fetch_contacts():
+    validate_config()
     headers = {"Depth": "1"}
     r = requests.request(
         "PROPFIND",
@@ -54,7 +65,8 @@ def fetch_contacts():
         is_collection = False
         for propstat in response.findall("{DAV:}propstat"):
             status = propstat.findtext("{DAV:}status", default="")
-            if " 200 " not in status:
+            status_parts = status.split()
+            if len(status_parts) < 2 or status_parts[1] != "200":
                 continue
             if propstat.find("{DAV:}prop/{DAV:}resourcetype/{DAV:}collection") is not None:
                 is_collection = True
@@ -67,14 +79,7 @@ def fetch_contacts():
 
 
 def generate_ics():
-    missing = [k for k, v in {
-        "CARDDAV_URL": CARDDAV_URL,
-        "CARDDAV_USER": USERNAME,
-        "CARDDAV_PASS": PASSWORD,
-    }.items() if not v]
-    if missing:
-        raise ValueError(f"Missing required environment variables: {', '.join(missing)}")
-
+    validate_config()
     ics = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Birthday Export//EN\n"
 
     for href in fetch_contacts():
