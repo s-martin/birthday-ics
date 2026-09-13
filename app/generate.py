@@ -98,7 +98,15 @@ def generate_ics():
     validate_config()
     ics = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Birthday Export//EN\n"
 
-    for href in fetch_contacts():
+    contacts = fetch_contacts()
+    print(f"Found {len(contacts)} contact(s) in CardDAV address book")
+
+    added = 0
+    ignored = 0
+    skipped_no_bday = 0
+    errors = 0
+
+    for href in contacts:
         try:
             card = requests.get(href, auth=(USERNAME, PASSWORD), timeout=30)
             card.raise_for_status()
@@ -108,6 +116,7 @@ def generate_ics():
 
                 if should_ignore(name):
                     print(f"Ignoring: {name}")
+                    ignored += 1
                     continue
 
                 date = v.bday.value
@@ -118,13 +127,22 @@ def generate_ics():
                     "RRULE:FREQ=YEARLY\n"
                     "END:VEVENT\n"
                 )
-        except Exception:
-            pass
+                added += 1
+            else:
+                skipped_no_bday += 1
+        except Exception as exc:
+            errors += 1
+            print(f"Error processing contact {href}: {exc}")
 
     ics += "END:VCALENDAR"
 
     with open(OUTPUT_FILE, "w") as f:
         f.write(ics)
+
+    print(
+        f"Wrote {added} birthday event(s) to {OUTPUT_FILE} "
+        f"(ignored: {ignored}, without birthday: {skipped_no_bday}, errors: {errors})"
+    )
 
 
 if __name__ == "__main__":
