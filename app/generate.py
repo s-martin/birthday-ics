@@ -34,6 +34,44 @@ def should_ignore(name: str) -> bool:
     return any(ignore in lname for ignore in IGNORE_LIST)
 
 
+def normalize_bday(value):
+    raw_value = None
+    if hasattr(value, "value"):
+        native_value = value.value
+        if isinstance(native_value, str):
+            raw_value = native_value.strip()
+        elif hasattr(value, "serialize"):
+            serialized = value.serialize().strip()
+            if ":" in serialized:
+                raw_value = serialized.split(":", 1)[1].strip()
+        value = native_value
+    elif isinstance(value, str):
+        raw_value = value.strip()
+
+    if raw_value:
+        if raw_value.startswith("--"):
+            digits = raw_value[2:].replace("-", "")
+            if len(digits) == 4 and digits.isdigit():
+                month, day = int(digits[:2]), int(digits[2:])
+                try:
+                    return raw_value, date_type(1604, month, day), None
+                except ValueError:
+                    return raw_value, None, None
+            return raw_value, None, None
+
+        for fmt in ("%Y-%m-%d", "%Y%m%d"):
+            try:
+                parsed_date = datetime.strptime(raw_value, fmt).date()
+                return raw_value, parsed_date, parsed_date.year
+            except ValueError:
+                continue
+    if isinstance(value, datetime):
+        return raw_value, value.date(), None
+    if isinstance(value, date_type):
+        return raw_value, value, None
+
+    return raw_value, None, None
+
 def parse_bday(value):
     """Parse a vCard BDAY value into a date object.
 
@@ -42,27 +80,13 @@ def parse_bday(value):
     formats (e.g. year-less birthdays like "--02-03" or "--0203"). This
     normalizes both cases and returns None if the value can't be parsed.
     """
-    if isinstance(value, datetime):
-        return value.date()
-    if isinstance(value, date_type):
-        return value
-    if isinstance(value, str):
-        text = value.strip()
-        if text.startswith("--"):
-            digits = text[2:].replace("-", "")
-            if len(digits) == 4 and digits.isdigit():
-                month, day = int(digits[:2]), int(digits[2:])
-                try:
-                    # No year given; use a fixed leap year as placeholder.
-                    return date_type(1604, month, day)
-                except ValueError:
-                    return None
-        for fmt in ("%Y-%m-%d", "%Y%m%d"):
-            try:
-                return datetime.strptime(text, fmt).date()
-            except ValueError:
-                continue
-    return None
+    _, parsed_date, _ = normalize_bday(value)
+    return parsed_date
+
+
+def format_bday_summary(name, value):
+    _, _, year = normalize_bday(value)
+    return f"{name} ({year})" if year is not None else name
 
 
 def fetch_contacts():
@@ -187,7 +211,7 @@ def generate_ics():
 
                 ics += (
                     "BEGIN:VEVENT\n"
-                    f"SUMMARY:{name} Geburtstag\n"
+                    f"SUMMARY:{format_bday_summary(name, v.bday)}\n"
                     f"DTSTART;VALUE=DATE:{date.strftime('%Y%m%d')}\n"
                     "RRULE:FREQ=YEARLY\n"
                     "END:VEVENT\n"
