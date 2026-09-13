@@ -34,14 +34,40 @@ def should_ignore(name: str) -> bool:
     return any(ignore in lname for ignore in IGNORE_LIST)
 
 
-def parse_bday_year(text):
-    for fmt in ("%Y-%m-%d", "%Y%m%d"):
-        try:
-            return datetime.strptime(text, fmt).year
-        except ValueError:
-            continue
-    return None
+def normalize_bday(value):
+    raw_value = None
+    if hasattr(value, "serialize"):
+        serialized = value.serialize().strip()
+        if ":" in serialized:
+            raw_value = serialized.split(":", 1)[1].strip()
+        value = getattr(value, "value", value)
+    elif isinstance(value, str):
+        raw_value = value.strip()
 
+    if isinstance(value, datetime):
+        parsed_date = value.date()
+        return raw_value, parsed_date, parsed_date.year
+    if isinstance(value, date_type):
+        return raw_value, value, value.year
+    if raw_value:
+        if raw_value.startswith("--"):
+            digits = raw_value[2:].replace("-", "")
+            if len(digits) == 4 and digits.isdigit():
+                month, day = int(digits[:2]), int(digits[2:])
+                try:
+                    return raw_value, date_type(1604, month, day), None
+                except ValueError:
+                    return raw_value, None, None
+            return raw_value, None, None
+
+        for fmt in ("%Y-%m-%d", "%Y%m%d"):
+            try:
+                parsed_date = datetime.strptime(raw_value, fmt).date()
+                return raw_value, parsed_date, parsed_date.year
+            except ValueError:
+                continue
+
+    return raw_value, None, None
 
 def parse_bday(value):
     """Parse a vCard BDAY value into a date object.
@@ -51,48 +77,12 @@ def parse_bday(value):
     formats (e.g. year-less birthdays like "--02-03" or "--0203"). This
     normalizes both cases and returns None if the value can't be parsed.
     """
-    if isinstance(value, datetime):
-        return value.date()
-    if isinstance(value, date_type):
-        return value
-    if isinstance(value, str):
-        text = value.strip()
-        if text.startswith("--"):
-            digits = text[2:].replace("-", "")
-            if len(digits) == 4 and digits.isdigit():
-                month, day = int(digits[:2]), int(digits[2:])
-                try:
-                    # No year given; use a fixed leap year as placeholder.
-                    return date_type(1604, month, day)
-                except ValueError:
-                    return None
-        year = parse_bday_year(text)
-        if year is not None:
-            return datetime.strptime(text, "%Y-%m-%d" if "-" in text else "%Y%m%d").date()
-    return None
+    _, parsed_date, _ = normalize_bday(value)
+    return parsed_date
 
 
 def format_bday_summary(name, value):
-    raw_value = None
-    if hasattr(value, "serialize"):
-        serialized = value.serialize().strip()
-        if ":" in serialized:
-            raw_value = serialized.split(":", 1)[1].strip()
-        value = getattr(value, "value", value)
-
-    year = None
-    if raw_value:
-        if not raw_value.startswith("--"):
-            year = parse_bday_year(raw_value)
-    elif isinstance(value, datetime):
-        year = value.year
-    elif isinstance(value, date_type):
-        year = value.year
-    elif isinstance(value, str):
-        text = value.strip()
-        if not text.startswith("--"):
-            year = parse_bday_year(text)
-
+    _, _, year = normalize_bday(value)
     return f"{name} ({year})" if year is not None else name
 
 
