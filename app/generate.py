@@ -66,8 +66,23 @@ def parse_bday(value):
 
 
 def format_bday_summary(name, value):
+    raw_value = None
+    if hasattr(value, "serialize"):
+        serialized = value.serialize().strip()
+        if ":" in serialized:
+            raw_value = serialized.split(":", 1)[1].strip()
+        value = getattr(value, "value", value)
+
     year = None
-    if isinstance(value, datetime):
+    if raw_value:
+        if not raw_value.startswith("--"):
+            for fmt in ("%Y-%m-%d", "%Y%m%d"):
+                try:
+                    year = datetime.strptime(raw_value, fmt).year
+                    break
+                except ValueError:
+                    continue
+    elif isinstance(value, datetime):
         year = value.year
     elif isinstance(value, date_type):
         year = value.year
@@ -206,7 +221,7 @@ def generate_ics():
 
                 ics += (
                     "BEGIN:VEVENT\n"
-                    f"SUMMARY:{format_bday_summary(name, v.bday.value)}\n"
+                    f"SUMMARY:{format_bday_summary(name, v.bday)}\n"
                     f"DTSTART;VALUE=DATE:{date.strftime('%Y%m%d')}\n"
                     "RRULE:FREQ=YEARLY\n"
                     "END:VEVENT\n"
