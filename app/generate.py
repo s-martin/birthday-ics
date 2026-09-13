@@ -2,6 +2,7 @@ import requests
 import vobject
 import os
 from urllib.parse import urljoin
+import xml.etree.ElementTree as ET
 
 CARDDAV_URL = os.getenv("CARDDAV_URL")
 USERNAME = os.getenv("CARDDAV_USER")
@@ -31,7 +32,19 @@ def fetch_contacts():
         timeout=30,
     )
     r.raise_for_status()
-    return r.text.split("<d:href>")[1:]
+
+    contacts = []
+    root = ET.fromstring(r.text)
+    for response in root.findall("{DAV:}response"):
+        is_collection = response.find("{DAV:}propstat/{DAV:}prop/{DAV:}resourcetype/{DAV:}collection") is not None
+        if is_collection:
+            continue
+
+        href = response.find("{DAV:}href")
+        if href is not None and href.text:
+            contacts.append(href.text)
+
+    return contacts
 
 
 def generate_ics():
@@ -47,7 +60,7 @@ def generate_ics():
 
     for href in fetch_contacts():
         try:
-            url = urljoin(CARDDAV_URL, href.split("</d:href>")[0])
+            url = urljoin(CARDDAV_URL, href)
             card = requests.get(url, auth=(USERNAME, PASSWORD), timeout=30)
             card.raise_for_status()
             v = vobject.readOne(card.text)
