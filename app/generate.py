@@ -44,11 +44,6 @@ def normalize_bday(value):
     elif isinstance(value, str):
         raw_value = value.strip()
 
-    if isinstance(value, datetime):
-        parsed_date = value.date()
-        return raw_value, parsed_date, parsed_date.year
-    if isinstance(value, date_type):
-        return raw_value, value, value.year
     if raw_value:
         if raw_value.startswith("--"):
             digits = raw_value[2:].replace("-", "")
@@ -66,6 +61,11 @@ def normalize_bday(value):
                 return raw_value, parsed_date, parsed_date.year
             except ValueError:
                 continue
+    if isinstance(value, datetime):
+        parsed_date = value.date()
+        return raw_value, parsed_date, parsed_date.year
+    if isinstance(value, date_type):
+        return raw_value, value, value.year
 
     return raw_value, None, None
 
