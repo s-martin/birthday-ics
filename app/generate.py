@@ -54,8 +54,15 @@ def fetch_contacts():
     if root_local_name != "multistatus":
         raise ValueError("CardDAV PROPFIND returned unexpected XML payload")
 
-    for response in root.findall("{DAV:}response"):
-        href = response.find("{DAV:}href")
+    dav_ns = ""
+    if root.tag.startswith("{") and "}" in root.tag:
+        dav_ns = root.tag[1:].split("}", 1)[0]
+
+    def qname(name: str) -> str:
+        return f"{{{dav_ns}}}{name}" if dav_ns else name
+
+    for response in root.findall(qname("response")):
+        href = response.find(qname("href"))
         if href is None or not href.text:
             continue
 
@@ -64,12 +71,17 @@ def fetch_contacts():
             continue
 
         is_collection = False
-        for propstat in response.findall("{DAV:}propstat"):
-            status = propstat.findtext("{DAV:}status", default="")
+        for propstat in response.findall(qname("propstat")):
+            status = propstat.findtext(qname("status"), default="")
             status_parts = status.split()
             if len(status_parts) < 2 or status_parts[1] != "200":
                 continue
-            if propstat.find("{DAV:}prop/{DAV:}resourcetype/{DAV:}collection") is not None:
+            collection_path = "/".join([
+                qname("prop"),
+                qname("resourcetype"),
+                qname("collection"),
+            ])
+            if propstat.find(collection_path) is not None:
                 is_collection = True
                 break
 
