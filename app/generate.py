@@ -72,6 +72,7 @@ def normalize_bday(value):
 
     return raw_value, None, None
 
+
 def parse_bday(value):
     """Parse a vCard BDAY value into a date object.
 

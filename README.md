@@ -2,9 +2,9 @@
 
 A small Docker service that generates a `birthdays.ics` file from your Nextcloud contacts via CardDAV once per day and serves it through a built‑in web server.
 
-This is to circumvent the limitiation that the generated Contacts Birthday calendar cannot be shared as ics in Nextcloud.
+This is to circumvent the limitiation that the generated Contacts Birthday calendar cannot be shared as ics in Nextcloud (see [Nextcloud Server #40331](https://github.com/nextcloud/server/issues/40331)).
 
-I needed this to use the Birtday calendar of my Nextcloud contacts for MagicMirror², but this may be of use for other applications.
+I needed this to use the Birthday calendar of my Nextcloud contacts for MagicMirror², but this may be of use for other applications.
 
 ## Features
 
@@ -15,11 +15,15 @@ I needed this to use the Birtday calendar of my Nextcloud contacts for MagicMirr
 
 ## Quick Installation
 
-Create a folder and download the `docker-compose.yml`:
+Create a folder:
 
 ```bash
 mkdir birthday-ics && cd birthday-ics
+```
 
+Download the `docker-compose.yml`:
+
+```bash
 curl -O https://raw.githubusercontent.com/s-martin/birthday-ics/main/docker-compose.yml.TEMPLATE && mv docker-compose.yml.TEMPLATE docker-compose.yml
 ```
 
