@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   birthday-ics:
     image: ghcr.io/s-martin/birthday-ics:latest
