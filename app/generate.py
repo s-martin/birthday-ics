@@ -2,6 +2,7 @@ import requests
 import vobject
 import os
 import sys
+from functools import lru_cache
 from datetime import date as date_type, datetime
 from urllib.parse import urljoin
 import xml.etree.ElementTree as ET
@@ -13,6 +14,7 @@ PASSWORD = os.getenv("CARDDAV_PASS")
 OUTPUT_FILE = "/data/birthdays.ics"
 
 
+@lru_cache(maxsize=1)
 def get_ignore_list() -> list[str]:
     return [
         name.strip().casefold()
@@ -180,6 +182,7 @@ def fetch_contacts():
 
 def generate_ics():
     validate_config()
+    get_ignore_list.cache_clear()
     ics = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Birthday Export//EN\n"
 
     contacts = fetch_contacts()
