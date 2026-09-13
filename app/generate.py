@@ -36,11 +36,15 @@ def should_ignore(name: str) -> bool:
 
 def normalize_bday(value):
     raw_value = None
-    if hasattr(value, "serialize"):
-        serialized = value.serialize().strip()
-        if ":" in serialized:
-            raw_value = serialized.split(":", 1)[1].strip()
-        value = getattr(value, "value", value)
+    if hasattr(value, "value"):
+        native_value = value.value
+        if isinstance(native_value, str):
+            raw_value = native_value.strip()
+        elif hasattr(value, "serialize"):
+            serialized = value.serialize().strip()
+            if ":" in serialized:
+                raw_value = serialized.split(":", 1)[1].strip()
+        value = native_value
     elif isinstance(value, str):
         raw_value = value.strip()
 
