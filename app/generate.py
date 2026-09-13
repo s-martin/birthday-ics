@@ -34,6 +34,15 @@ def should_ignore(name: str) -> bool:
     return any(ignore in lname for ignore in IGNORE_LIST)
 
 
+def parse_bday_year(text):
+    for fmt in ("%Y-%m-%d", "%Y%m%d"):
+        try:
+            return datetime.strptime(text, fmt).year
+        except ValueError:
+            continue
+    return None
+
+
 def parse_bday(value):
     """Parse a vCard BDAY value into a date object.
 
@@ -57,11 +66,9 @@ def parse_bday(value):
                     return date_type(1604, month, day)
                 except ValueError:
                     return None
-        for fmt in ("%Y-%m-%d", "%Y%m%d"):
-            try:
-                return datetime.strptime(text, fmt).date()
-            except ValueError:
-                continue
+        year = parse_bday_year(text)
+        if year is not None:
+            return datetime.strptime(text, "%Y-%m-%d" if "-" in text else "%Y%m%d").date()
     return None
 
 
@@ -76,12 +83,7 @@ def format_bday_summary(name, value):
     year = None
     if raw_value:
         if not raw_value.startswith("--"):
-            for fmt in ("%Y-%m-%d", "%Y%m%d"):
-                try:
-                    year = datetime.strptime(raw_value, fmt).year
-                    break
-                except ValueError:
-                    continue
+            year = parse_bday_year(raw_value)
     elif isinstance(value, datetime):
         year = value.year
     elif isinstance(value, date_type):
@@ -89,12 +91,7 @@ def format_bday_summary(name, value):
     elif isinstance(value, str):
         text = value.strip()
         if not text.startswith("--"):
-            for fmt in ("%Y-%m-%d", "%Y%m%d"):
-                try:
-                    year = datetime.strptime(text, fmt).year
-                    break
-                except ValueError:
-                    continue
+            year = parse_bday_year(text)
 
     return f"{name} ({year})" if year is not None else name
 
