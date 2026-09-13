@@ -2,6 +2,7 @@ import requests
 import vobject
 import os
 import sys
+from datetime import date as date_type, datetime
 from urllib.parse import urljoin
 import xml.etree.ElementTree as ET
 
@@ -31,6 +32,37 @@ def validate_config():
 def should_ignore(name: str) -> bool:
     lname = name.lower()
     return any(ignore in lname for ignore in IGNORE_LIST)
+
+
+def parse_bday(value):
+    """Parse a vCard BDAY value into a date object.
+
+    vobject usually parses BDAY into a date/datetime object, but falls back
+    to returning the raw string when the value doesn't match the expected
+    formats (e.g. year-less birthdays like "--02-03" or "--0203"). This
+    normalizes both cases and returns None if the value can't be parsed.
+    """
+    if isinstance(value, datetime):
+        return value.date()
+    if isinstance(value, date_type):
+        return value
+    if isinstance(value, str):
+        text = value.strip()
+        if text.startswith("--"):
+            digits = text[2:].replace("-", "")
+            if len(digits) == 4 and digits.isdigit():
+                month, day = int(digits[:2]), int(digits[2:])
+                try:
+                    # No year given; use a fixed leap year as placeholder.
+                    return date_type(1604, month, day)
+                except ValueError:
+                    return None
+        for fmt in ("%Y-%m-%d", "%Y%m%d"):
+            try:
+                return datetime.strptime(text, fmt).date()
+            except ValueError:
+                continue
+    return None
 
 
 def fetch_contacts():
@@ -144,7 +176,15 @@ def generate_ics():
                     ignored += 1
                     continue
 
-                date = v.bday.value
+                date = parse_bday(v.bday.value)
+                if date is None:
+                    print(
+                        f"Warning: could not parse birthday for {name}: {v.bday.value!r}",
+                        file=sys.stderr,
+                    )
+                    skipped_no_bday += 1
+                    continue
+
                 ics += (
                     "BEGIN:VEVENT\n"
                     f"SUMMARY:{name} Geburtstag\n"
