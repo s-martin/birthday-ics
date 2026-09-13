@@ -34,14 +34,27 @@ def fetch_contacts():
     r.raise_for_status()
 
     contacts = []
+    base_url = CARDDAV_URL.rstrip("/")
     root = ET.fromstring(r.text)
-    for response in root.findall("{DAV:}response"):
-        is_collection = response.find("{DAV:}propstat/{DAV:}prop/{DAV:}resourcetype/{DAV:}collection") is not None
-        if is_collection:
+    for response in root.findall(".//{DAV:}response"):
+        href = response.find("{DAV:}href")
+        if href is None or not href.text:
             continue
 
-        href = response.find("{DAV:}href")
-        if href is not None and href.text:
+        resolved_href = urljoin(CARDDAV_URL, href.text).rstrip("/")
+        if resolved_href == base_url:
+            continue
+
+        is_collection = False
+        for propstat in response.findall("{DAV:}propstat"):
+            status = propstat.findtext("{DAV:}status", default="")
+            if " 200 " not in status:
+                continue
+            if propstat.find("{DAV:}prop/{DAV:}resourcetype/{DAV:}collection") is not None:
+                is_collection = True
+                break
+
+        if not is_collection:
             contacts.append(href.text)
 
     return contacts
