@@ -71,6 +71,7 @@ def fetch_contacts():
             continue
 
         is_collection = False
+        is_vcard = href.text.lower().endswith(".vcf")
         for propstat in response.findall(qname("propstat")):
             status = propstat.findtext(qname("status"), default="")
             status_parts = status.split()
@@ -83,8 +84,11 @@ def fetch_contacts():
             if resourcetype is not None and resourcetype.find(qname("collection")) is not None:
                 is_collection = True
                 break
+            content_type = prop.findtext(qname("getcontenttype"), default="").lower()
+            if "text/vcard" in content_type:
+                is_vcard = True
 
-        if not is_collection:
+        if not is_collection and is_vcard:
             contacts.append(resolved_href)
 
     return contacts
