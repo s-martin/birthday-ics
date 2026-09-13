@@ -2,6 +2,7 @@ import requests
 import vobject
 import os
 import sys
+from functools import lru_cache
 from datetime import date as date_type, datetime
 from urllib.parse import urljoin
 import xml.etree.ElementTree as ET
@@ -10,13 +11,16 @@ CARDDAV_URL = os.getenv("CARDDAV_URL")
 USERNAME = os.getenv("CARDDAV_USER")
 PASSWORD = os.getenv("CARDDAV_PASS")
 
-IGNORE_LIST = [
-    name.strip().lower()
-    for name in os.getenv("IGNORE_NAMES", "").split(",")
-    if name.strip()
-]
-
 OUTPUT_FILE = "/data/birthdays.ics"
+
+
+@lru_cache(maxsize=1)
+def get_ignore_list() -> list[str]:
+    return [
+        name.strip().casefold()
+        for name in os.getenv("IGNORE_NAMES", "").split(",")
+        if name.strip()
+    ]
 
 
 def validate_config():
@@ -30,8 +34,8 @@ def validate_config():
 
 
 def should_ignore(name: str) -> bool:
-    lname = name.lower()
-    return any(ignore in lname for ignore in IGNORE_LIST)
+    lname = name.casefold()
+    return any(ignore in lname for ignore in get_ignore_list())
 
 
 def normalize_bday(value):
@@ -178,6 +182,7 @@ def fetch_contacts():
 
 def generate_ics():
     validate_config()
+    get_ignore_list.cache_clear()
     ics = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Birthday Export//EN\n"
 
     contacts = fetch_contacts()
