@@ -1,0 +1,15 @@
+version: "3.9"
+
+services:
+  birthday-ics:
+    image: ghcr.io/<YOUR_GITHUB_USERNAME>/birthday-ics:latest
+    container_name: birthday-ics
+    ports:
+      - "8080:8080"
+    environment:
+      CARDDAV_URL: "https://yourcloud/remote.php/dav/addressbooks/users/<user>/contacts/"
+      CARDDAV_USER: "<user>"
+      CARDDAV_PASS: "<password>"
+      IGNORE_NAMES: "Max Mustermann,Test"
+    volumes:
+      - ./data:/data
