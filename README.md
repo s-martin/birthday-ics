@@ -81,6 +81,8 @@ The container is configured entirely through environment variables.
 
 The ICS file is regenerated daily at 03:00 server time
 
+It is also generated once when the container starts.
+
 ### Volumes
 
 `./data:/data` stores the generated birthdays.ics file. This ensures the ICS file persists across container restarts.

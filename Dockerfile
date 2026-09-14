@@ -14,4 +14,4 @@ RUN chmod 0644 /etc/cron.d/birthday-cron && crontab /etc/cron.d/birthday-cron
 
 RUN mkdir /data
 
-CMD cron && python3 server.py
+CMD cron && python3 /app/generate.py && exec python3 /app/server.py
