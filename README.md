@@ -6,6 +6,8 @@ This is to circumvent the limitiation that the generated Contacts Birthday calen
 
 I needed this to use the Birthday calendar of my Nextcloud contacts for MagicMirror², but this may be of use for other applications.
 
+It's mostly vibe-coded, but it does the job.
+
 ## Features
 
 - Daily birthday extraction and ICS generation from CardDAV contacts
