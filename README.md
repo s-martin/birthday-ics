@@ -8,6 +8,8 @@ I needed this to use the Birthday calendar of my Nextcloud contacts for MagicMir
 
 It's mostly vibe-coded, but it does the job.
 
+> [!warning] You should run the container internally, the webserver providing the ICS file does not have any authentication whatsoever
+
 ## Features
 
 - Daily birthday extraction and ICS generation from CardDAV contacts
