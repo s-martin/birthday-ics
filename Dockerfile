@@ -15,3 +15,6 @@ RUN chmod 0644 /etc/cron.d/birthday-cron && crontab /etc/cron.d/birthday-cron
 RUN mkdir /data
 
 CMD cron && python3 /app/generate.py && exec python3 /app/server.py
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+  CMD python3 -c "import urllib.request; urllib.request.urlopen(urllib.request.Request('http://127.0.0.1:8080/birthdays.ics', method='HEAD'), timeout=4)"
